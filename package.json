@@ -1,0 +1,18 @@
+{
+  "name": "workflow-approvals",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shell",
+    "remote-workflow"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=remote-workflow & npm run dev --workspace=shell",
+    "dev:shell": "npm run dev --workspace=shell",
+    "dev:remote": "npm run dev --workspace=remote-workflow",
+    "build": "npm run build --workspace=remote-workflow && npm run build --workspace=shell",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "knip": "npm run knip --workspaces --if-present"
+  }
+}

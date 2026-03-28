@@ -1,0 +1,25 @@
+node_modules/
+dist/
+*.local
+
+# Module Federation temp files
+.__mf__temp/
+.mf/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Docs
+/docs
+
+# Claude
+.claude/
+.mcp.json
