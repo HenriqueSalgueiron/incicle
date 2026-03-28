@@ -2,6 +2,7 @@
   "name": "workflow-approvals",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "shell",
     "remote-workflow"
@@ -11,8 +12,18 @@
     "dev:shell": "npm run dev --workspace=shell",
     "dev:remote": "npm run dev --workspace=remote-workflow",
     "build": "npm run build --workspace=remote-workflow && npm run build --workspace=shell",
-    "lint": "npm run lint --workspaces --if-present",
+    "lint": "eslint shell/src remote-workflow/src",
+    "format": "prettier --write 'shell/src/**/*.{ts,tsx}' 'remote-workflow/src/**/*.{ts,tsx}'",
     "test": "npm run test --workspaces --if-present",
     "knip": "npm run knip --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "prettier": "^3.8.1",
+    "typescript-eslint": "^8.57.2"
   }
 }
