@@ -8,7 +8,7 @@
     "remote-workflow"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=remote-workflow & npm run dev --workspace=shell",
+    "dev": "concurrently -n remote,shell -c blue,green \"npm run dev:remote\" \"npm run dev:shell\"",
     "dev:shell": "npm run dev --workspace=shell",
     "dev:remote": "npm run dev --workspace=remote-workflow",
     "build": "npm run build --workspace=remote-workflow && npm run build --workspace=shell",
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^5.2.0",
