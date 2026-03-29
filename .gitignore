@@ -24,7 +24,7 @@ dist/
 .DS_Store
 
 # Docs
-/docs
+/personal
 
 # Claude
 .claude/
