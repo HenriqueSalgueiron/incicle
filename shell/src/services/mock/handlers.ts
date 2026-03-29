@@ -1,6 +1,7 @@
 import { http, HttpResponse, delay } from 'msw';
 import { MOCK_USER, MOCK_TOKEN, MOCK_COMPANIES } from './fixtures/auth';
 import { getInboxItems, decideItem } from './fixtures/inbox';
+import { getInstance } from './fixtures/instance';
 
 export const handlers = [
   http.post('/api/auth/login', () => {
@@ -49,5 +50,14 @@ export const handlers = [
     }
 
     return HttpResponse.json({ success: true });
+  }),
+
+  http.get('/api/instances/:id', async ({ params }) => {
+    await delay(500);
+    const instance = getInstance(params.id as string);
+    if (!instance) {
+      return HttpResponse.json({ error: 'Instance not found' }, { status: 404 });
+    }
+    return HttpResponse.json(instance);
   }),
 ];

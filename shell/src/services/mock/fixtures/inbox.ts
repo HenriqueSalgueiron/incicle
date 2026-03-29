@@ -1,4 +1,5 @@
 import type { ApprovalItem } from '@workflow/shared-types';
+import { seededRandom } from './utils';
 
 const STEP_NAMES = [
   'Análise Financeira',
@@ -36,14 +37,6 @@ const TITLE_PREFIXES = [
   'Aprovação de Projeto',
   'Requisição de Material',
 ];
-
-function seededRandom(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 0) % 2147483647;
-    return s / 2147483647;
-  };
-}
 
 function generateSlaDeadline(random: () => number): string {
   const now = Date.now();

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { ApprovalItem } from '@workflow/shared-types';
 import { SlaCountdown } from '@/components/SlaCountdown';
 
@@ -25,17 +26,21 @@ function ApprovalInboxItem({ item, onApprove, onReject }: ApprovalInboxItemProps
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span
+          <Link
+            to={`/instances/${item.instanceId}`}
+            aria-label={`Ver detalhes de ${item.title}`}
             style={{
               fontWeight: 500,
               fontSize: '0.875rem',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              color: '#1d4ed8',
+              textDecoration: 'none',
             }}
           >
             {item.title}
-          </span>
+          </Link>
           {isDecided && (
             <span
               style={{
