@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import type { ApprovalItem } from '@workflow/shared-types';
 import type { Api, ApiError } from '@/services/api';
+import type { InboxChannel } from '@/utils/broadcastChannel';
+
+let _channel: InboxChannel | null = null;
 
 export interface ConflictNotification {
   itemId: string;
@@ -19,6 +22,9 @@ interface InboxState {
   rejectItem: (api: Api, itemId: string) => Promise<void>;
   removeItem: (itemId: string) => void;
   dismissConflict: (itemId: string) => void;
+  setBroadcastChannel: (channel: InboxChannel | null) => void;
+  applyRemoteDecision: (itemId: string, decision: 'approved' | 'rejected') => void;
+  applyRemoteConflict: (itemId: string, title: string, timestamp: number) => void;
 }
 
 function decideItem(
@@ -42,16 +48,20 @@ function decideItem(
     ),
   }));
 
-  api.post(`/api/approvals/${itemId}/${endpoint}`).catch((err: unknown) => {
-    const apiErr = err as ApiError;
-    if (apiErr.status === 409) {
+  api.post(`/api/approvals/${itemId}/${endpoint}`).then(() => {
+    _channel?.post({ type: 'ITEM_DECIDED', itemId, decision });
+  }).catch((err: unknown) => {
+    const status = err instanceof Error && 'status' in err ? (err as ApiError).status : 0;
+    if (status === 409) {
+      const timestamp = Date.now();
       set((state) => ({
         items: state.items.filter((i) => i.id !== itemId),
         conflicts: [
           ...state.conflicts,
-          { itemId, title: snapshot.title, timestamp: Date.now() },
+          { itemId, title: snapshot.title, timestamp },
         ],
       }));
+      _channel?.post({ type: 'ITEM_CONFLICT', itemId, title: snapshot.title, timestamp });
     } else {
       set((state) => ({
         items: state.items.map((i) =>
@@ -98,6 +108,28 @@ export const useInboxStore = create<InboxState>((set, get) => ({
   dismissConflict: (itemId) => {
     set((state) => ({
       conflicts: state.conflicts.filter((c) => c.itemId !== itemId),
+    }));
+  },
+
+  setBroadcastChannel: (channel) => {
+    _channel = channel;
+  },
+
+  applyRemoteDecision: (itemId, decision) => {
+    set((state) => ({
+      items: state.items.map((i) =>
+        i.id === itemId ? { ...i, status: decision } : i,
+      ),
+    }));
+  },
+
+  applyRemoteConflict: (itemId, title, timestamp) => {
+    set((state) => ({
+      items: state.items.filter((i) => i.id !== itemId),
+      conflicts: [
+        ...state.conflicts,
+        { itemId, title, timestamp },
+      ],
     }));
   },
 }));

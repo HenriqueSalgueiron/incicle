@@ -9,6 +9,9 @@ dist/
 # MSW generated worker
 **/mockServiceWorker.js
 
+# TypeScript build cache
+*.tsbuildinfo
+
 # Environment
 .env
 .env.local

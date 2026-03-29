@@ -3,6 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
 import { useInboxStore } from '@/store/inboxStore';
+import { useInboxSync } from '@/hooks/useInboxSync';
 import { ApprovalInboxItem } from '@/components/ApprovalInboxItem';
 
 const POLLING_INTERVAL = 30_000;
@@ -13,6 +14,7 @@ export default function ApprovalInbox() {
     useInboxStore();
 
   const api = useApi();
+  useInboxSync();
   const parentRef = useRef<HTMLDivElement>(null);
 
   // items includes optimistically updated ones (approved/rejected) — show all

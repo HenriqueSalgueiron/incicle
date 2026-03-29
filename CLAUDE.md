@@ -50,7 +50,8 @@ workflow-approvals/
 │   │   │   └── AuthProvider.tsx      → Provider que recebe props do shell
 │   │   ├── hooks/
 │   │   │   ├── useAuth.ts           → Hook para pages consumirem auth
-│   │   │   └── useApi.ts            → Hook que cria API autenticada via token atual
+│   │   │   ├── useApi.ts            → Hook que cria API autenticada via token atual
+│   │   │   └── useInboxSync.ts      → Hook que conecta BroadcastChannel ao inboxStore
 │   │   ├── store/
 │   │   │   ├── inboxStore.ts         → Zustand: inbox com optimistic updates
 │   │   │   └── delegationStore.ts
@@ -330,19 +331,18 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
 1. ~~Setup do monorepo (shell + remote + MF + vite configs + ESLint + Prettier + commitlint + husky)~~ ✅
 2. ~~Auth + company context (zustand store, shared-types, MSW setup, login page, enableMocking pattern)~~ ✅
 3. ~~API client + Inbox de Aprovações~~ ✅
-
-- Criar `remote-workflow/src/services/api.ts` (fetch wrapper puro, sem hook)
-- Criar `remote-workflow/src/hooks/useApi.ts` (hook que usa `useAuth` e memoiza `createApi(token)`)
-- Instalar `@tanstack/react-virtual` para virtualização
-- MSW handlers: GET inbox (gerar 10k+ itens), POST approve, POST reject (com 409)
-- `inboxStore.ts`: lista + atualização otimista + rollback no erro/409
-- Componentes: lista virtualizada, item com SLA countdown, ações aprovar/reprovar
-- Polling periódico (30s) para manter inbox atualizado
-- Acessibilidade: navegação por teclado nos itens, roles corretos, labels
-
-4. Multi-tab sync
+  - Criar `remote-workflow/src/services/api.ts` (fetch wrapper puro, sem hook)
+  - Criar `remote-workflow/src/hooks/useApi.ts` (hook que usa `useAuth` e memoiza `createApi(token)`)
+  - Instalar `@tanstack/react-virtual` para virtualização
+  - MSW handlers: GET inbox (gerar 10k+ itens), POST approve, POST reject (com 409)
+  - `inboxStore.ts`: lista + atualização otimista + rollback no erro/409
+  - Componentes: lista virtualizada, item com SLA countdown, ações aprovar/reprovar
+  - Polling periódico (30s) para manter inbox atualizado
+  - Acessibilidade: navegação por teclado nos itens, roles corretos, labels
+4. ~~Multi-tab sync~~ ✅
    - `utils/broadcastChannel.ts`: sincronizar ações entre abas
    - Integrar com inboxStore (aprovar na aba A → reflete na aba B)
+   - Auth persistido via Zustand `persist` (sessão sobrevive entre abas)
 5. Detalhe de Instância
    - MSW handler: GET /api/instances/:id
    - Timeline virtualizada (reusar lib do passo 3)
