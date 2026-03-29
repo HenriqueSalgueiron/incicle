@@ -8,45 +8,59 @@ SPA de workflow de aprovações corporativo multiempresa, usando arquitetura mic
 
 ```
 workflow-approvals/
-├── shell/                    → App hospedeiro (React Router, auth, layout)
-│   ├── src/
-│   │   ├── App.tsx
-│   │   ├── bootstrap.tsx     → Entry point real (import dinâmico)
-│   │   ├── index.ts          → Entry point do webpack/vite (importa bootstrap)
-│   │   ├── components/
-│   │   │   └── RemoteBoundary.tsx  → Error Boundary dedicado pro remote
-│   │   ├── context/
-│   │   │   ├── AuthContext.tsx
-│   │   │   └── CompanyContext.tsx
-│   │   └── store/
-│   │       └── authStore.ts  → Zustand (auth + company_id)
-│   └── vite.config.ts        → Module Federation host config
+├── packages/
+│   └── shared-types/             → Workspace de tipos compartilhados
+│       ├── auth.ts               → User, Company, LoginResponse, RemoteAppProps
+│       └── index.ts              → Re-exports
 │
-├── remote-workflow/          → Microfrontend exposto via Module Federation
+├── shell/                        → App hospedeiro (React Router, auth, layout)
 │   ├── src/
-│   │   ├── App.tsx           → Raiz do remote (recebe auth/company via props ou contexto)
-│   │   ├── pages/
-│   │   │   ├── ApprovalInbox.tsx      → /approvals/inbox
-│   │   │   ├── InstanceDetail.tsx     → /instances/:id
-│   │   │   ├── InstanceCreate.tsx     → /instances/new
-│   │   │   └── Delegations.tsx        → /delegations
+│   │   ├── App.tsx               → Auth gate: login vs app autenticado
+│   │   ├── bootstrap.tsx         → Entry point real (enableMocking + render)
+│   │   ├── index.ts              → Entry point do vite (importa bootstrap)
 │   │   ├── components/
-│   │   ├── hooks/
+│   │   │   ├── RemoteBoundary.tsx    → Error Boundary dedicado pro remote
+│   │   │   └── RemoteLoader.tsx      → Lazy load do remote via loadRemote + props
+│   │   ├── layouts/
+│   │   │   └── AppLayout.tsx         → Header + company switcher + children
+│   │   ├── pages/
+│   │   │   └── LoginPage.tsx         → Tela de login (fetch /api/auth/login)
 │   │   ├── store/
-│   │   │   ├── inboxStore.ts          → Zustand: inbox com optimistic updates
+│   │   │   └── authStore.ts          → Zustand (auth + company_id, discriminated union)
+│   │   └── services/
+│   │       └── mock/                 → MSW setup (isolado, import condicional)
+│   │           ├── browser.ts        → setupWorker
+│   │           ├── enableMocking.ts  → Função que inicia MSW condicionalmente
+│   │           ├── handlers.ts       → Handlers (auth + futuros endpoints)
+│   │           └── fixtures/         → Dados fake
+│   │               └── auth.ts       → Mock user, token, companies
+│   └── vite.config.ts           → Module Federation host config
+│
+├── remote-workflow/              → Microfrontend exposto via Module Federation
+│   ├── src/
+│   │   ├── App.tsx               → Raiz do remote (recebe auth via props)
+│   │   ├── pages/
+│   │   │   ├── ApprovalInbox.tsx     → /approvals/inbox
+│   │   │   ├── InstanceDetail.tsx    → /instances/:id
+│   │   │   ├── InstanceCreate.tsx    → /instances/new
+│   │   │   └── Delegations.tsx       → /delegations
+│   │   ├── components/
+│   │   ├── context/
+│   │   │   ├── authContext.ts        → createContext para auth
+│   │   │   └── AuthProvider.tsx      → Provider que recebe props do shell
+│   │   ├── hooks/
+│   │   │   └── useAuth.ts           → Hook para pages consumirem auth
+│   │   ├── store/
+│   │   │   ├── inboxStore.ts         → Zustand: inbox com optimistic updates
 │   │   │   └── delegationStore.ts
 │   │   ├── services/
-│   │   │   ├── api.ts                 → Cliente HTTP (axios ou fetch wrapper)
-│   │   │   └── mock/                  → Estratégia de mock isolada
-│   │   │       ├── handlers.ts        → MSW handlers
-│   │   │       ├── fixtures/          → Dados fake (10k+ itens para inbox)
-│   │   │       └── browser.ts         → MSW browser worker setup
+│   │   │   └── api.ts               → Cliente HTTP (fetch wrapper)
 │   │   ├── schemas/
-│   │   │   └── dynamicFormSchema.ts   → Geração de schema Zod a partir de template
+│   │   │   └── dynamicFormSchema.ts  → Geração de schema Zod a partir de template
 │   │   └── utils/
-│   │       ├── sla.ts                 → Cálculo de SLA (ok/warning/breached)
-│   │       └── broadcastChannel.ts    → Multi-tab sync
-│   └── vite.config.ts        → Module Federation remote config
+│   │       ├── sla.ts               → Cálculo de SLA (ok/warning/breached)
+│   │       └── broadcastChannel.ts  → Multi-tab sync
+│   └── vite.config.ts           → Module Federation remote config
 │
 ├── .env.example
 ├── README.md
@@ -85,7 +99,7 @@ Quando `VITE_USE_MOCK=true`, MSW intercepta todas as chamadas. O MSW só é impo
 ### Module Federation
 
 - O remote é carregado em runtime via `loadRemote()` — NUNCA via import estático.
-- `react`, `react-dom`, `react-router-dom` são shared singletons com `requiredVersion`.
+- `react`, `react-dom`, `react-router-dom`, `zustand` são shared singletons com `requiredVersion`.
 - O shell DEVE renderizar um Error Boundary dedicado se o remote falhar (rede, versão incompatível). O shell nunca crasha por causa do remote.
 - O bundle do remote NÃO deve estar incluído no bundle inicial do shell.
 
@@ -146,24 +160,31 @@ Quando `VITE_USE_MOCK=true`, MSW intercepta todas as chamadas. O MSW só é impo
 
 ## Estratégia de Mock (MSW)
 
+O MSW é configurado no **shell** (host), pois o Service Worker é global no browser e intercepta todas as requests da página — incluindo as feitas pelo remote. O setup segue o padrão de import condicional:
+
 ```typescript
-// src/main.tsx ou bootstrap.tsx
-async function enableMocking() {
-  if (import.meta.env.VITE_USE_MOCK !== "true") return;
-  const { worker } = await import("./services/mock/browser");
-  return worker.start({ onUnhandledRequest: "bypass" });
+// shell/src/services/mock/enableMocking.ts
+export async function enableMocking() {
+  if (import.meta.env.VITE_USE_MOCK !== 'true') return;
+  const { worker } = await import('./browser');
+  return worker.start({ onUnhandledRequest: 'bypass' });
 }
 
-enableMocking().then(() => {
-  // render app
-});
+// shell/src/bootstrap.tsx
+import { enableMocking } from './services/mock/enableMocking';
+enableMocking().then(() => { /* render app */ });
 ```
 
-O MSW fica em `services/mock/` e NUNCA é importado fora do bloco condicional. No build de produção, tree-shaking elimina o código.
+O MSW fica em `shell/src/services/mock/` e NUNCA é importado fora do bloco condicional. No build de produção, tree-shaking elimina o código. Handlers para endpoints do remote (inbox, delegations, etc.) ficam em `shell/src/services/mock/handlers.ts` junto com o handler de auth.
+
+### Autenticação Mock
+
+Em modo mock, a tela de login faz `POST /api/auth/login` → MSW intercepta e retorna user, token e companies. O shell popula o `authStore` e passa os dados ao remote via props. Não há mock data hardcoded nos bootstraps.
 
 ## Endpoints da API (Mock)
 
 ```
+POST   /api/auth/login                        → Login (retorna user, token, companies)
 GET    /api/approvals/inbox?company_id=X     → Lista aprovações pendentes (suportar 10k+)
 POST   /api/approvals/:id/approve            → Aprovar (pode retornar 409)
 POST   /api/approvals/:id/reject             → Reprovar (pode retornar 409)
@@ -306,15 +327,49 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
 - NÃO fazer commits sem prefixo semântico
 - NÃO deixar exports não utilizados (knip vai pegar)
 
-## Ordem de Implementação Sugerida
+## Ordem de Implementação
 
-1. Setup do monorepo (shell + remote + Module Federation + vite configs)
-2. Auth mock + zustand store + company context
-3. Inbox de Aprovações (com virtualização, otimismo, rollback, 409)
-4. Multi-tab sync (BroadcastChannel)
-5. Detalhe de Instância (timeline virtualizada, steps, snapshot vs estado atual)
-6. Criação de Instância (formulário dinâmico com react-hook-form + zod)
-7. Delegações (CRUD + detecção visual de ciclo com representação da cadeia)
-8. Testes (unitários, componente com axe-core, E2E/integração)
-9. ESLint, knip, commitlint, bundle report
+1. ~~Setup do monorepo (shell + remote + MF + vite configs + ESLint + Prettier + commitlint + husky)~~ ✅
+2. ~~Auth + company context (zustand store, shared-types, MSW setup, login page, enableMocking pattern)~~ ✅
+3. API client + Inbox de Aprovações
+   - Criar `remote-workflow/src/services/api.ts` (fetch wrapper que usa token do useAuth)
+   - Instalar `@tanstack/react-virtual` para virtualização
+   - MSW handlers: GET inbox (gerar 10k+ itens), POST approve, POST reject (com 409)
+   - `inboxStore.ts`: lista + atualização otimista + rollback no erro/409
+   - Componentes: lista virtualizada, item com SLA countdown, ações aprovar/reprovar
+   - Polling periódico (30s) para manter inbox atualizado
+   - Acessibilidade: navegação por teclado nos itens, roles corretos, labels
+4. Multi-tab sync
+   - `utils/broadcastChannel.ts`: sincronizar ações entre abas
+   - Integrar com inboxStore (aprovar na aba A → reflete na aba B)
+5. Detalhe de Instância
+   - MSW handler: GET /api/instances/:id
+   - Timeline virtualizada (reusar lib do passo 3)
+   - Steps com estados visuais (pending, approved, rejected, waiting)
+   - Snapshot vs estado atual com distinção visual
+6. Criação de Instância
+   - Instalar `react-hook-form` + `zod`
+   - MSW handlers: GET templates, GET template schema, POST instances
+   - Schema Zod gerado dinamicamente a partir do template
+   - Troca de template sem remontar form (reset seletivo, SEM key={templateId})
+   - Feedback de submissão: pending → submitted
+7. Delegações
+   - MSW handlers: GET, POST (com erro de ciclo 400), DELETE delegations
+   - CRUD completo: listar, criar, cancelar
+   - Representação visual da cadeia de ciclo (não apenas toast)
+8. Testes + Acessibilidade
+   - Instalar `vitest` + `@testing-library/react` + `axe-core`
+   - Unitários: SLA, schema Zod, lógica de conflito otimista
+   - Componente (com axe-core): ApprovalInboxItem, DelegationForm, DynamicInstanceForm
+   - E2E/Integração (≥2): fluxo completo, 409 rollback, multi-tab, remote offline, 10k itens
+   - Corrigir violações de acessibilidade encontradas
+9. knip + bundle report
+   - Instalar `knip` + `rollup-plugin-visualizer`
+   - Gerar KNIP-REPORT.md (zero exports não utilizados)
+   - Gerar BUNDLE-REPORT.html (medir FCP, bundle size, verificar budget)
 10. README.md + DECISIONS.md
+    - README: setup local, estratégia de mock, performance medida, o que faria com mais tempo
+    - DECISIONS.md: respostas específicas sobre MF version mismatch, estado do store no 409, multi-tab strategy, form sem remontar
+
+**Nota**: acessibilidade (keyboard nav, ARIA, roles) deve ser considerada durante os passos 3-7, não apenas no passo 8. O passo 8 é para testes e correções finais com axe-core.
+**Nota**: DECISIONS.md pode ir sendo rascunhado durante os passos 3-7 conforme as decisões são tomadas.

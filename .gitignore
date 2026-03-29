@@ -6,6 +6,9 @@ dist/
 .__mf__temp/
 .mf/
 
+# MSW generated worker
+**/mockServiceWorker.js
+
 # Environment
 .env
 .env.local

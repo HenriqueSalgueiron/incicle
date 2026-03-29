@@ -9,6 +9,12 @@ export interface Company {
   name: string;
 }
 
+export interface LoginResponse {
+  user: User;
+  token: string;
+  companies: Company[];
+}
+
 /** Props passed from shell to remote across the MF boundary */
 export interface RemoteAppProps {
   user: User;

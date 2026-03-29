@@ -1,16 +1,31 @@
 import { create } from 'zustand';
 import type { User, Company } from '@workflow/shared-types';
 
-interface AuthState {
-  user: User | null;
-  token: string | null;
+interface UnauthenticatedState {
+  user: null;
+  token: null;
+  companies: [];
+  currentCompanyId: null;
+  isAuthenticated: false;
+}
+
+interface AuthenticatedState {
+  user: User;
+  token: string;
   companies: Company[];
-  currentCompanyId: string | null;
-  isAuthenticated: boolean;
+  currentCompanyId: string;
+  isAuthenticated: true;
+}
+
+type AuthData = UnauthenticatedState | AuthenticatedState;
+
+type AuthActions = {
   login: (user: User, token: string, companies: Company[]) => void;
   logout: () => void;
   switchCompany: (companyId: string) => void;
-}
+};
+
+type AuthState = AuthData & AuthActions;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -24,7 +39,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user,
       token,
       companies,
-      currentCompanyId: companies[0]?.id ?? null,
+      currentCompanyId: companies[0]?.id ?? '',
       isAuthenticated: true,
     }),
 

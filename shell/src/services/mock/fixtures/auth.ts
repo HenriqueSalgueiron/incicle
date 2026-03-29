@@ -1,4 +1,4 @@
-import type { User, Company } from './auth';
+import type { User, Company } from '@workflow/shared-types';
 
 export const MOCK_USER: User = {
   id: 'user-1',
