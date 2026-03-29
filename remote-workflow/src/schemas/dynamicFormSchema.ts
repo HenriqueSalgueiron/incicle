@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { TemplateField } from '@workflow/shared-types';
 
-export function generateZodSchema(fields: TemplateField[]): z.ZodObject<z.ZodRawShape> {
-  const shape: z.ZodRawShape = {};
+export function generateZodSchema(fields: TemplateField[]): z.ZodObject<Record<string, z.ZodTypeAny>> {
+  const shape: Record<string, z.ZodTypeAny> = {};
 
   for (const field of fields) {
     let schema: z.ZodTypeAny;
@@ -11,6 +11,9 @@ export function generateZodSchema(fields: TemplateField[]): z.ZodObject<z.ZodRaw
       case 'text':
       case 'textarea': {
         let str = z.string();
+        if (field.required && field.validation?.min == null) {
+          str = str.min(1, 'Campo obrigatório');
+        }
         if (field.validation?.min != null) str = str.min(field.validation.min, field.validation.message);
         if (field.validation?.max != null) str = str.max(field.validation.max, field.validation.message);
         if (field.validation?.pattern) str = str.regex(new RegExp(field.validation.pattern), field.validation.message);
@@ -23,7 +26,7 @@ export function generateZodSchema(fields: TemplateField[]): z.ZodObject<z.ZodRaw
         break;
 
       case 'number': {
-        let num = z.coerce.number({ invalid_type_error: 'Informe um número válido' });
+        let num = z.coerce.number({ error: 'Informe um número válido' });
         if (field.validation?.min != null) num = num.min(field.validation.min, field.validation.message);
         if (field.validation?.max != null) num = num.max(field.validation.max, field.validation.message);
         schema = num;
@@ -37,7 +40,7 @@ export function generateZodSchema(fields: TemplateField[]): z.ZodObject<z.ZodRaw
       case 'select':
         if (field.options && field.options.length > 0) {
           schema = z.enum(field.options as [string, ...string[]], {
-            errorMap: () => ({ message: 'Selecione uma opção' }),
+            error: 'Selecione uma opção',
           });
         } else {
           schema = z.string();
