@@ -49,7 +49,8 @@ workflow-approvals/
 │   │   │   ├── authContext.ts        → createContext para auth
 │   │   │   └── AuthProvider.tsx      → Provider que recebe props do shell
 │   │   ├── hooks/
-│   │   │   └── useAuth.ts           → Hook para pages consumirem auth
+│   │   │   ├── useAuth.ts           → Hook para pages consumirem auth
+│   │   │   └── useApi.ts            → Hook que cria API autenticada via token atual
 │   │   ├── store/
 │   │   │   ├── inboxStore.ts         → Zustand: inbox com optimistic updates
 │   │   │   └── delegationStore.ts
@@ -172,7 +173,9 @@ export async function enableMocking() {
 
 // shell/src/bootstrap.tsx
 import { enableMocking } from './services/mock/enableMocking';
-enableMocking().then(() => { /* render app */ });
+enableMocking().then(() => {
+  /* render app */
+});
 ```
 
 O MSW fica em `shell/src/services/mock/` e NUNCA é importado fora do bloco condicional. No build de produção, tree-shaking elimina o código. Handlers para endpoints do remote (inbox, delegations, etc.) ficam em `shell/src/services/mock/handlers.ts` junto com o handler de auth.
@@ -207,7 +210,7 @@ interface ApprovalItem {
   currentStep: string;
   requester: { id: string; name: string };
   slaDeadline: string; // ISO date
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
 
@@ -216,7 +219,7 @@ interface Instance {
   templateId: string;
   templateVersion: number;
   requester: { id: string; name: string };
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   steps: InstanceStep[];
   timeline: TimelineEvent[];
   snapshot: ApproverSnapshot; // Snapshot no momento do submit
@@ -227,18 +230,13 @@ interface Instance {
 interface InstanceStep {
   id: string;
   name: string;
-  state: "pending" | "approved" | "rejected" | "waiting";
+  state: 'pending' | 'approved' | 'rejected' | 'waiting';
   approvers: { id: string; name: string; decidedAt?: string }[];
 }
 
 interface TimelineEvent {
   id: string;
-  type:
-    | "created"
-    | "step_approved"
-    | "step_rejected"
-    | "delegated"
-    | "completed";
+  type: 'created' | 'step_approved' | 'step_rejected' | 'delegated' | 'completed';
   actor: { id: string; name: string };
   description: string;
   timestamp: string;
@@ -247,7 +245,7 @@ interface TimelineEvent {
 
 interface TemplateField {
   name: string;
-  type: "text" | "number" | "date" | "select" | "textarea" | "email";
+  type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'email';
   label: string;
   required: boolean;
   options?: string[]; // Para select
@@ -272,12 +270,12 @@ interface Delegation {
   toUser: { id: string; name: string };
   startDate: string;
   endDate: string;
-  status: "active" | "cancelled";
+  status: 'active' | 'cancelled';
 }
 
 // Resposta de erro de ciclo
 interface CycleError {
-  error: "DELEGATION_CYCLE";
+  error: 'DELEGATION_CYCLE';
   chain: { id: string; name: string }[]; // A→B→C→A
 }
 ```
@@ -331,14 +329,17 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
 
 1. ~~Setup do monorepo (shell + remote + MF + vite configs + ESLint + Prettier + commitlint + husky)~~ ✅
 2. ~~Auth + company context (zustand store, shared-types, MSW setup, login page, enableMocking pattern)~~ ✅
-3. API client + Inbox de Aprovações
-   - Criar `remote-workflow/src/services/api.ts` (fetch wrapper que usa token do useAuth)
-   - Instalar `@tanstack/react-virtual` para virtualização
-   - MSW handlers: GET inbox (gerar 10k+ itens), POST approve, POST reject (com 409)
-   - `inboxStore.ts`: lista + atualização otimista + rollback no erro/409
-   - Componentes: lista virtualizada, item com SLA countdown, ações aprovar/reprovar
-   - Polling periódico (30s) para manter inbox atualizado
-   - Acessibilidade: navegação por teclado nos itens, roles corretos, labels
+3. ~~API client + Inbox de Aprovações~~ ✅
+
+- Criar `remote-workflow/src/services/api.ts` (fetch wrapper puro, sem hook)
+- Criar `remote-workflow/src/hooks/useApi.ts` (hook que usa `useAuth` e memoiza `createApi(token)`)
+- Instalar `@tanstack/react-virtual` para virtualização
+- MSW handlers: GET inbox (gerar 10k+ itens), POST approve, POST reject (com 409)
+- `inboxStore.ts`: lista + atualização otimista + rollback no erro/409
+- Componentes: lista virtualizada, item com SLA countdown, ações aprovar/reprovar
+- Polling periódico (30s) para manter inbox atualizado
+- Acessibilidade: navegação por teclado nos itens, roles corretos, labels
+
 4. Multi-tab sync
    - `utils/broadcastChannel.ts`: sincronizar ações entre abas
    - Integrar com inboxStore (aprovar na aba A → reflete na aba B)
