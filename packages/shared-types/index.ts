@@ -1,1 +1,1 @@
-export type { User, Company, LoginResponse, RemoteAppProps } from './auth';
+export type { User, Company, LoginResponse, RemoteAppProps, ApprovalItem } from './auth';

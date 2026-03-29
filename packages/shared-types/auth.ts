@@ -15,6 +15,17 @@ export interface LoginResponse {
   companies: Company[];
 }
 
+export interface ApprovalItem {
+  id: string;
+  instanceId: string;
+  title: string;
+  currentStep: string;
+  requester: { id: string; name: string };
+  slaDeadline: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
 /** Props passed from shell to remote across the MF boundary */
 export interface RemoteAppProps {
   user: User;
