@@ -30,6 +30,7 @@
     "eslint-plugin-react-refresh": "^0.4.26",
     "husky": "^9.1.7",
     "prettier": "^3.8.1",
+    "rollup-plugin-visualizer": "^7.0.1",
     "typescript-eslint": "^8.57.2"
   },
   "msw": {

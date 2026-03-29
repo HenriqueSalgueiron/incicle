@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { federation } from '@module-federation/vite';
 import path from 'path';
 
@@ -20,6 +21,13 @@ export default defineConfig({
       dts: false,
     }),
     react(),
+    visualizer({
+      filename: path.resolve(__dirname, '../docs/BUNDLE-REPORT-remote.html'),
+      template: 'treemap',
+      gzipSize: true,
+      brotliSize: true,
+      open: false,
+    }),
   ],
   envDir: path.resolve(__dirname, '..'),
   resolve: {

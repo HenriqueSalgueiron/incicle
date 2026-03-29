@@ -23,8 +23,8 @@ dist/
 # OS
 .DS_Store
 
-# Docs
-/docs
+# Personal
+/personal
 
 # Claude
 .claude/
