@@ -17,7 +17,7 @@
     "format": "prettier --write 'shell/src/**/*.{ts,tsx}' 'remote-workflow/src/**/*.{ts,tsx}'",
     "test": "npm run test --workspaces --if-present",
     "knip": "knip",
-    "knip:report": "knip --reporter markdown > KNIP-REPORT.md",
+    "knip:report": "knip --reporter markdown > docs/KNIP-REPORT.md",
     "prepare": "husky"
   },
   "devDependencies": {
