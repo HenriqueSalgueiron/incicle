@@ -34,16 +34,20 @@ export function DelegationForm({ users, onSubmit, submitting }: DelegationFormPr
         marginBottom: '1.5rem',
       }}
     >
-      <h3 style={{ margin: '0 0 1rem', fontSize: '0.9375rem', fontWeight: 600 }}>
-        Nova Delegação
-      </h3>
+      <h3 style={{ margin: '0 0 1rem', fontSize: '0.9375rem', fontWeight: 600 }}>Nova Delegação</h3>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
         {/* Delegado */}
-        <div style={{ flex: '1 1 12rem' }}>
+        <div style={{ flex: '0 1 20rem' }}>
           <label
             htmlFor="delegation-delegate"
-            style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              color: '#374151',
+              marginBottom: '0.25rem',
+            }}
           >
             Delegado
           </label>
@@ -75,7 +79,12 @@ export function DelegationForm({ users, onSubmit, submitting }: DelegationFormPr
             <span
               id="delegation-delegate-error"
               role="alert"
-              style={{ display: 'block', fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}
+              style={{
+                display: 'block',
+                fontSize: '0.75rem',
+                color: '#dc2626',
+                marginTop: '0.25rem',
+              }}
             >
               {errors.toUserId.message}
             </span>
@@ -83,10 +92,16 @@ export function DelegationForm({ users, onSubmit, submitting }: DelegationFormPr
         </div>
 
         {/* Data inicial */}
-        <div style={{ flex: '1 1 8rem' }}>
+        <div style={{ flex: '0 1 20rem', marginRight: '2rem' }}>
           <label
             htmlFor="delegation-start"
-            style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              color: '#374151',
+              marginBottom: '0.25rem',
+            }}
           >
             Data inicial
           </label>
@@ -110,7 +125,12 @@ export function DelegationForm({ users, onSubmit, submitting }: DelegationFormPr
             <span
               id="delegation-start-error"
               role="alert"
-              style={{ display: 'block', fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}
+              style={{
+                display: 'block',
+                fontSize: '0.75rem',
+                color: '#dc2626',
+                marginTop: '0.25rem',
+              }}
             >
               {errors.startDate.message}
             </span>
@@ -118,10 +138,16 @@ export function DelegationForm({ users, onSubmit, submitting }: DelegationFormPr
         </div>
 
         {/* Data final */}
-        <div style={{ flex: '1 1 8rem' }}>
+        <div style={{ flex: '0 1 20rem' }}>
           <label
             htmlFor="delegation-end"
-            style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}
+            style={{
+              display: 'block',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              color: '#374151',
+              marginBottom: '0.25rem',
+            }}
           >
             Data final
           </label>
@@ -145,7 +171,12 @@ export function DelegationForm({ users, onSubmit, submitting }: DelegationFormPr
             <span
               id="delegation-end-error"
               role="alert"
-              style={{ display: 'block', fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}
+              style={{
+                display: 'block',
+                fontSize: '0.75rem',
+                color: '#dc2626',
+                marginTop: '0.25rem',
+              }}
             >
               {errors.endDate.message}
             </span>
