@@ -14,8 +14,6 @@ dist/
 
 # Report files
 BUNDLE-REPORT-remote.html
-BUNDLE-REPORT-shell.html
-KNIP-REPORT.md
 
 # Environment
 .env

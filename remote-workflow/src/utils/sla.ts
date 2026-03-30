@@ -2,7 +2,7 @@ export type SlaStatus = 'ok' | 'warning' | 'breached';
 
 const WARNING_THRESHOLD_MS = 4 * 60 * 60 * 1000; // 4 hours
 
-export interface TimeRemaining {
+interface TimeRemaining {
   hours: number;
   minutes: number;
   seconds: number;

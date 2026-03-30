@@ -5,7 +5,7 @@ import type { InboxChannel } from '@/utils/broadcastChannel';
 
 let _channel: InboxChannel | null = null;
 
-export interface ConflictNotification {
+interface ConflictNotification {
   itemId: string;
   title: string;
   timestamp: number;
@@ -43,34 +43,30 @@ function decideItem(
 
   // Optimistic update
   set(() => ({
-    items: items.map((i) =>
-      i.id === itemId ? { ...i, status: decision } : i,
-    ),
+    items: items.map((i) => (i.id === itemId ? { ...i, status: decision } : i)),
   }));
 
-  api.post(`/api/approvals/${itemId}/${endpoint}`).then(() => {
-    _channel?.post({ type: 'ITEM_DECIDED', itemId, decision });
-  }).catch((err: unknown) => {
-    const status = err instanceof Error && 'status' in err ? (err as ApiError).status : 0;
-    if (status === 409) {
-      const timestamp = Date.now();
-      set((state) => ({
-        items: state.items.filter((i) => i.id !== itemId),
-        conflicts: [
-          ...state.conflicts,
-          { itemId, title: snapshot.title, timestamp },
-        ],
-      }));
-      _channel?.post({ type: 'ITEM_CONFLICT', itemId, title: snapshot.title, timestamp });
-    } else {
-      set((state) => ({
-        items: state.items.map((i) =>
-          i.id === itemId ? snapshot : i,
-        ),
-        error: `Erro ao ${actionLabel} "${snapshot.title}"`,
-      }));
-    }
-  });
+  api
+    .post(`/api/approvals/${itemId}/${endpoint}`)
+    .then(() => {
+      _channel?.post({ type: 'ITEM_DECIDED', itemId, decision });
+    })
+    .catch((err: unknown) => {
+      const status = err instanceof Error && 'status' in err ? (err as ApiError).status : 0;
+      if (status === 409) {
+        const timestamp = Date.now();
+        set((state) => ({
+          items: state.items.filter((i) => i.id !== itemId),
+          conflicts: [...state.conflicts, { itemId, title: snapshot.title, timestamp }],
+        }));
+        _channel?.post({ type: 'ITEM_CONFLICT', itemId, title: snapshot.title, timestamp });
+      } else {
+        set((state) => ({
+          items: state.items.map((i) => (i.id === itemId ? snapshot : i)),
+          error: `Erro ao ${actionLabel} "${snapshot.title}"`,
+        }));
+      }
+    });
 }
 
 export const useInboxStore = create<InboxState>((set, get) => ({
@@ -117,19 +113,14 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
   applyRemoteDecision: (itemId, decision) => {
     set((state) => ({
-      items: state.items.map((i) =>
-        i.id === itemId ? { ...i, status: decision } : i,
-      ),
+      items: state.items.map((i) => (i.id === itemId ? { ...i, status: decision } : i)),
     }));
   },
 
   applyRemoteConflict: (itemId, title, timestamp) => {
     set((state) => ({
       items: state.items.filter((i) => i.id !== itemId),
-      conflicts: [
-        ...state.conflicts,
-        { itemId, title, timestamp },
-      ],
+      conflicts: [...state.conflicts, { itemId, title, timestamp }],
     }));
   },
 }));

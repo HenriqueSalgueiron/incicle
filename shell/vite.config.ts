@@ -27,7 +27,7 @@ export default defineConfig({
     }),
     react(),
     visualizer({
-      filename: path.resolve(__dirname, '../BUNDLE-REPORT-shell.html'),
+      filename: path.resolve(__dirname, '../BUNDLE-REPORT.html'),
       template: 'treemap',
       gzipSize: true,
       brotliSize: true,

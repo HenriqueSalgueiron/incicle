@@ -1,9 +1,8 @@
 import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { ReactElement } from 'react';
-import type { ApprovalItem, RemoteAppProps } from '@workflow/shared-types';
+import type { ApprovalItem } from '@workflow/shared-types';
 import type { Api } from '@/services/api';
-import { AuthContext } from '@/context/authContext';
 
 // --- Router wrapper ---
 
@@ -14,35 +13,6 @@ export function renderWithRouter(
   return render(ui, {
     wrapper: ({ children }) => (
       <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
-    ),
-    ...options,
-  });
-}
-
-// --- Auth wrapper ---
-
-const DEFAULT_AUTH: RemoteAppProps = {
-  user: { id: 'user-1', name: 'Ana Silva', email: 'ana@test.com' },
-  token: 'mock-token',
-  currentCompanyId: 'company-1',
-  companies: [{ id: 'company-1', name: 'InCicle' }],
-  onCompanyChange: () => {},
-};
-
-export function renderWithAuth(
-  ui: ReactElement,
-  {
-    authOverrides,
-    initialEntries = ['/'],
-    ...options
-  }: RenderOptions & { authOverrides?: Partial<RemoteAppProps>; initialEntries?: string[] } = {},
-) {
-  const authProps = { ...DEFAULT_AUTH, ...authOverrides };
-  return render(ui, {
-    wrapper: ({ children }) => (
-      <AuthContext.Provider value={authProps}>
-        <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
-      </AuthContext.Provider>
     ),
     ...options,
   });
