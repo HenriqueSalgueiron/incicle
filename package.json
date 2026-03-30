@@ -16,7 +16,8 @@
     "lint": "eslint shell/src remote-workflow/src",
     "format": "prettier --write 'shell/src/**/*.{ts,tsx}' 'remote-workflow/src/**/*.{ts,tsx}'",
     "test": "npm run test --workspaces --if-present",
-    "knip": "npm run knip --workspaces --if-present",
+    "knip": "knip",
+    "knip:report": "knip --reporter markdown > KNIP-REPORT.md",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -29,7 +30,9 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.26",
     "husky": "^9.1.7",
+    "knip": "^6.1.0",
     "prettier": "^3.8.1",
+    "rollup-plugin-visualizer": "^7.0.1",
     "typescript-eslint": "^8.57.2"
   },
   "msw": {

@@ -358,13 +358,13 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
    - MSW handlers: GET, POST (com erro de ciclo 400), DELETE delegations
    - CRUD completo: listar, criar, cancelar
    - Representação visual da cadeia de ciclo (não apenas toast)
-8. Testes + Acessibilidade
+8. ~~Testes + Acessibilidade~~ ✅
    - Instalar `vitest` + `@testing-library/react` + `axe-core`
    - Unitários: SLA, schema Zod, lógica de conflito otimista
    - Componente (com axe-core): ApprovalInboxItem, DelegationForm, DynamicInstanceForm
    - E2E/Integração (≥2): fluxo completo, 409 rollback, multi-tab, remote offline, 10k itens
    - Corrigir violações de acessibilidade encontradas
-9. knip + bundle report
+9. ~~knip + bundle report~~ ✅
    - Instalar `knip` + `rollup-plugin-visualizer`
    - Gerar KNIP-REPORT.md (zero exports não utilizados)
    - Gerar BUNDLE-REPORT.html (medir FCP, bundle size, verificar budget)
