@@ -1,5 +1,6 @@
 export interface ApiError extends Error {
   status: number;
+  body?: unknown;
 }
 
 export interface Api {
@@ -22,6 +23,11 @@ export function createApi(token: string): Api {
     if (!res.ok) {
       const error = new Error(res.statusText) as ApiError;
       error.status = res.status;
+      try {
+        error.body = await res.json();
+      } catch {
+        // non-JSON response body
+      }
       throw error;
     }
 

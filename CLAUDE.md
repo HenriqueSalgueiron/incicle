@@ -348,13 +348,13 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
    - Timeline virtualizada (reusar lib do passo 3)
    - Steps com estados visuais (pending, approved, rejected, waiting)
    - Snapshot vs estado atual com distinção visual
-6. Criação de Instância
+6. ~~Criação de Instância~~ ✅
    - Instalar `react-hook-form` + `zod`
    - MSW handlers: GET templates, GET template schema, POST instances
    - Schema Zod gerado dinamicamente a partir do template
    - Troca de template sem remontar form (reset seletivo, SEM key={templateId})
    - Feedback de submissão: pending → submitted
-7. Delegações
+7. ~~Delegações~~ ✅
    - MSW handlers: GET, POST (com erro de ciclo 400), DELETE delegations
    - CRUD completo: listar, criar, cancelar
    - Representação visual da cadeia de ciclo (não apenas toast)

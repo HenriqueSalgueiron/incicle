@@ -3,6 +3,12 @@ import { MOCK_USER, MOCK_TOKEN, MOCK_COMPANIES } from './fixtures/auth';
 import { getInboxItems, decideItem } from './fixtures/inbox';
 import { getInstance } from './fixtures/instance';
 import { getTemplateList, getTemplateSchema } from './fixtures/templates';
+import {
+  getUsers,
+  getDelegations,
+  createDelegation,
+  cancelDelegation,
+} from './fixtures/delegations';
 
 export const handlers = [
   http.post('/api/auth/login', () => {
@@ -82,5 +88,42 @@ export const handlers = [
     const body = (await request.json()) as Record<string, unknown>;
     const id = `instance-new-${Date.now()}`;
     return HttpResponse.json({ id, status: 'pending', templateId: body.templateId }, { status: 201 });
+  }),
+
+  http.get('/api/users', async () => {
+    await delay(200);
+    const users = getUsers();
+    return HttpResponse.json({ users });
+  }),
+
+  http.get('/api/delegations', async () => {
+    await delay(300);
+    const delegations = getDelegations();
+    return HttpResponse.json({ delegations });
+  }),
+
+  http.post('/api/delegations', async ({ request }) => {
+    await delay(500);
+    const body = (await request.json()) as {
+      toUserId: string;
+      startDate: string;
+      endDate: string;
+    };
+    const result = createDelegation(MOCK_USER.id, body.toUserId, body.startDate, body.endDate);
+
+    if (!result.success) {
+      return HttpResponse.json(
+        { error: 'DELEGATION_CYCLE', chain: result.cycle },
+        { status: 400 },
+      );
+    }
+
+    return HttpResponse.json(result.delegation, { status: 201 });
+  }),
+
+  http.delete('/api/delegations/:id', async ({ params }) => {
+    await delay(300);
+    cancelDelegation(params.id as string);
+    return HttpResponse.json({ success: true });
   }),
 ];
