@@ -1,0 +1,240 @@
+# Desafio Técnico Frontend Pleno — Workflow de Aprovações
+
+## Contexto
+
+Você vai construir a interface de um sistema corporativo de workflow de aprovações para ambiente multiempresa.
+
+O backend já existe e está documentado. Seu trabalho é criar uma SPA funcional, com qualidade de engenharia e autonomia total de decisão — como se fosse para produção amanhã.
+
+Não há wireframe. Design é por sua conta.
+
+---
+
+## Requisitos de Plataforma
+
+- **React + TypeScript** obrigatório.
+- **Vite** obrigatório como bundler.
+- **Mock obrigatório**: com `VITE_USE_MOCK=true`, toda a aplicação deve funcionar sem backend. A estratégia de mock (MSW, fixtures, adapters) fica por sua conta — justifique no README e mostre que ela **não contamina** o código de produção.
+- Execução local em menos de 5 minutos a partir do clone.
+
+### Parametrização Obrigatória
+
+```
+VITE_API_URL=
+VITE_USE_MOCK=true
+VITE_APP_PORT=5173
+```
+
+---
+
+## Arquitetura Obrigatória — Microfrontend
+
+A InCicle usa Module Federation em produção para compor microfrontends em runtime. Este projeto **deve** seguir esse modelo, em escala reduzida:
+
+### Estrutura mínima esperada
+
+```
+shell/          → app hospedeiro (React Router, autenticação, layout)
+remote-workflow/ → microfrontend exposto via Module Federation
+```
+
+**O que o remote deve expor:**
+- A aplicação de workflow completa (ou ao menos o Inbox + Detalhe de Instância).
+
+**O que o shell deve fazer:**
+- Carregar o remote em runtime via `loadRemote()` — não via import estático.
+- Renderizar um **Error Boundary dedicado** para falha do remote: se o remote não carregar (rede, versão incompatível), o shell não pode crashar — exibe fallback e continua funcionando.
+- Gerenciar autenticação e `company_id` e injetá-los no remote via props ou contexto compartilhado.
+
+**Shared dependencies:**
+- `react`, `react-dom`, `react-router-dom` como singletons.
+- Documente no README por que cada lib foi marcada como singleton e qual o risco de não fazer isso.
+
+**O que avaliaremos:**
+- O remote carrega lazily (não está no bundle inicial do shell)?
+- O shell sobrevive ao remote offline?
+- As shared deps estão configuradas com `requiredVersion`?
+- O candidato consegue explicar o que acontece num `version mismatch` de shared dep?
+
+---
+
+## Escopo das Telas
+
+### 1) Inbox de Aprovações (`/approvals/inbox`)
+
+- Lista de aprovações pendentes do usuário logado.
+- Cada item: título da instância, etapa atual, solicitante, SLA restante (countdown em tempo real).
+- Ações de **Aprovar** e **Reprovar** com **atualização otimista**: a ação deve refletir na UI imediatamente, antes da resposta do servidor. Se a API retornar erro, **reverter o estado** e exibir o motivo.
+- **Cenário de conflito**: se o servidor retornar `409 Conflict` (outro aprovador já decidiu), o item conflitado deve sair da lista, exibir uma notificação contextual explicando o ocorrido, e **manter a posição de scroll** do usuário no restante da lista.
+- **Atualização em background**: defina e implemente uma estratégia para manter o inbox atualizado sem o usuário precisar recarregar (polling, SSE, BroadcastChannel — qualquer abordagem, desde que documentada com seus trade-offs).
+- **Virtualização obrigatória**: o inbox deve renderizar corretamente com 10 000+ itens sem degradar performance. Gere dados fake suficientes no mock para demonstrar.
+
+### 2) Detalhe de Instância (`/instances/:id`)
+
+- Dados gerais (template, versão, solicitante, status).
+- **Timeline de eventos** em ordem cronológica, virtualizada se houver muitos eventos.
+- Etapas do fluxo com estado visual claro: `pending`, `approved`, `rejected`, `waiting`.
+- O snapshot da instância (aprovadores no momento do submit) deve ser exibido — e deve ser visualmente distinto de um eventual "estado atual do organograma" se os dados diferirem.
+
+### 3) Criação de Instância (`/instances/new`)
+
+- Seleção de template (somente versões publicadas).
+- **Formulário com schema dinâmico**: cada template define seus próprios campos de contexto (tipo, label, required, validação). O formulário deve se adaptar sem re-montar desnecessariamente quando o template muda. Os campos chegam do backend (mock no modo dev).
+- **Constraint explícito**: a troca de template **não pode desmontar e remontar** o formulário — campos preenchidos em comum entre templates devem ser preservados no estado do `react-hook-form`, e apenas campos incompatíveis com o novo template devem ser limpos. Demonstre esse comportamento em um teste.
+- Validação no cliente com **Zod** — o schema deve ser gerado a partir da definição do template, não hardcoded.
+- Feedback de submissão com estado `pending → submitted`.
+
+### 4) Delegações (`/delegations`)
+
+- Listagem de delegações ativas.
+- Formulário para criar nova delegação (delegado, vigência).
+- Cancelar delegação.
+- **Detecção visual de ciclo**: quando o backend retorna erro de ciclo (A→B→C→A), a UI deve representar visualmente a cadeia que causou o conflito — não apenas um toast genérico.
+
+---
+
+## Hard Requirements
+
+### Concorrência e Conflito
+
+Defina no README como sua UI lida com o seguinte cenário:
+
+> O usuário está no inbox com dados carregados há 45 segundos. Clica em "Aprovar" no step X. O servidor retorna `409` porque outro aprovador (ou o próprio usuário em outra aba) já decidiu esse step.
+
+Explique:
+- O que acontece com o estado otimista?
+- Como o usuário entende o que ocorreu?
+- Como o inbox se recupera sem full reload?
+
+Isso deve estar implementado, não apenas descrito.
+
+### Multi-tab Awareness
+
+Se o usuário aprovar uma instância em uma aba, outra aba aberta no mesmo inbox deve refletir a mudança. Implemente usando `BroadcastChannel`, `localStorage` events, ou WebSocket compartilhado — qualquer estratégia, desde que funcione e seja documentada.
+
+### Performance Budget
+
+Documente no README com valores reais medidos no build de produção:
+
+| Métrica | Meta |
+|---|---|
+| FCP (First Contentful Paint) | < 1,5s |
+| Bundle inicial do shell | < 200 kB gzip |
+| Bundle do remote | não incluído no shell inicial |
+| Virtualização do inbox | sem queda de FPS com 10k itens |
+
+Use `rollup-plugin-visualizer` ou equivalente. Entregue o output em `BUNDLE-REPORT.html` ou screenshot equivalente.
+
+Se não atingir uma meta, justifique tecnicamente e proponha o que faria para atingir.
+
+---
+
+## Qualidade de Código
+
+- **TypeScript estrito** — `strict: true`, sem `any` sem comentário justificando.
+- **Knip obrigatório**: zero exports não utilizados na entrega. Entregue `KNIP-REPORT.md`.
+- **ESLint** configurado e passando no CI local.
+- **Commits semânticos** (`feat:`, `fix:`, `refactor:`...) — commitlint configurado.
+- **Acessibilidade**: axe-core integrado nos testes de componente. Zero violações críticas nos fluxos de inbox e aprovação.
+
+---
+
+## Libs que Valorizamos
+
+Não são obrigatórias individualmente, mas o conjunto reflete nossa stack. Usar sem dominar é pior do que não usar.
+
+| Lib | Contexto esperado |
+|---|---|
+| `react-hook-form` + `zod` | Formulário com schema dinâmico gerado do template |
+| `zustand` | Estado global (auth, company context, inbox otimista) |
+| `react-router-dom` | Roteamento com lazy loading por rota |
+| `@module-federation` | Shell + remote (obrigatório neste desafio) |
+| `vitest` + `@testing-library/react` | Testes unitários e de componente |
+| `react-joyride` | Tour de onboarding no inbox (diferencial) |
+| `knip` | Análise de código morto (obrigatório) |
+
+---
+
+## Testes Obrigatórios
+
+### Unitários
+- Lógica de SLA: cálculo de tempo restante, classificação (ok / warning / breached).
+- Geração de schema Zod a partir de definição de template.
+- Lógica de detecção de conflito no estado otimista.
+
+### Componente (com axe-core)
+- `ApprovalInboxItem`: estados normal, warning SLA, breach SLA, conflito pós-otimismo.
+- `DelegationForm`: criação válida, erro de ciclo do backend representado visualmente.
+- `DynamicInstanceForm`: troca de template reconfigura campos sem re-montar o formulário.
+
+### E2E / Integração (escolha ao menos dois)
+- Fluxo completo: criar instância → inbox → aprovar → timeline reflete evento.
+- Atualização otimista + rollback: mock retorna 409, UI reverte e mantém scroll.
+- Multi-tab: aprovação em aba A reflete no inbox da aba B.
+- Remote indisponível: shell renderiza fallback sem crashar.
+- Inbox com 10k itens: não há reflow visível ao scrollar.
+
+Cobertura numérica não é o objetivo. Documente **o que** cada teste prova e **por que** é o cenário certo.
+
+---
+
+## Entregáveis
+
+- Repositório Git com código fonte.
+- `README.md` com:
+  - Setup local (< 5 minutos do clone).
+  - Estratégia de mock: como ela fica isolada do código de produção.
+  - Performance: valores reais medidos + análise.
+  - O que implementaria com mais tempo.
+- `DECISIONS.md` — obrigatório, descrito abaixo.
+- `.env.example` completo.
+- `KNIP-REPORT.md`.
+- `BUNDLE-REPORT.html` (ou screenshot do bundle analyzer).
+
+### DECISIONS.md — Obrigatório
+
+Não é um README alternativo. É um documento de decisões arquiteturais onde **cada item deve incluir: a alternativa descartada, o motivo do descarte no contexto deste projeto, e um cenário onde a alternativa seria a escolha certa**.
+
+Responda obrigatoriamente às seguintes perguntas — com base no seu código real, não em texto genérico:
+
+**Module Federation:**
+- O que acontece, passo a passo, se o remote carrega mas com uma versão de `react` diferente da registrada como `requiredVersion` no shell?
+- Se você precisasse adicionar um segundo remote ao shell amanhã, o que mudaria na sua configuração atual?
+
+**Estado e conflito:**
+- Qual o estado exato do seu store/cache no momento em que um `approve` retorna 409 — antes da requisição, durante e após o rollback? Descreva os valores reais das estruturas de dados.
+- Por que você escolheu a estratégia X para multi-tab awareness e não Y? Em que cenário Y seria superior?
+
+**Formulário dinâmico:**
+- Como você garantiu que a troca de template não remonta o formulário? Qual seria o sintoma visível se você tivesse usado `key={templateId}` no lugar da sua solução?
+
+Respostas que poderiam se aplicar a qualquer projeto serão desconsideradas.
+
+---
+
+## Critérios de Avaliação (100 pontos)
+
+| Critério | Pontos |
+|---|---|
+| Arquitetura Module Federation (shell, remote, error boundary, shared deps) | 25 |
+| Consistência de estado (otimismo, rollback, conflito, multi-tab) | 20 |
+| Qualidade de testes (cenários escolhidos, axe-core, justificativas) | 20 |
+| Performance e bundle budget (virtualização, lazy loading, métricas reais) | 15 |
+| DECISIONS.md — profundidade e honestidade das decisões documentadas | 10 |
+| Acessibilidade (axe zero critical, navegação por teclado) | 10 |
+
+---
+
+## Defesa Técnica (ao vivo, 30–45 min)
+
+- Demonstrar o shell carregando o remote em runtime e o fallback com remote offline.
+- Demonstrar o cenário de conflito 409: atualização otimista → rollback → estado final.
+- Explicar as shared dependencies: por que singleton, o que acontece num version mismatch — **usando o código entregue como referência**, não em abstrato.
+- Perguntas diretas sobre o `DECISIONS.md`: "você disse que descartou X por causa de Y — mostre onde no código essa decisão se reflete".
+- Apresentar o bundle report e apontar o maior custo de carregamento.
+- Demonstrar a troca de template no formulário e explicar por que o formulário não remonta.
+
+## Tempo Sugerido
+
+- Implementação: 10 a 14 horas.
+- Defesa técnica: 30 a 45 minutos.
