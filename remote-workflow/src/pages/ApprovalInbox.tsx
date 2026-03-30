@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
@@ -63,6 +64,20 @@ export default function ApprovalInbox() {
             </span>
           )}
         </h2>
+        <Link
+          to="/instances/new"
+          style={{
+            padding: '0.375rem 0.75rem',
+            background: '#1d4ed8',
+            color: '#fff',
+            borderRadius: '6px',
+            textDecoration: 'none',
+            fontSize: '0.8125rem',
+            fontWeight: 500,
+          }}
+        >
+          + Nova Instância
+        </Link>
       </div>
 
       {/* Conflict notifications */}

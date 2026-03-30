@@ -329,7 +329,7 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
 ## Ordem de Implementação
 
 1. ~~Setup do monorepo (shell + remote + MF + vite configs + ESLint + Prettier + commitlint + husky)~~ ✅
-2. ~~Auth + company context (zustand store, shared-types, MSW setup, login page, enableMocking pattern)~~ ✅
+2. ~~Auth + company context (zustand store, shared-types, MSW setup, login page, enableMocking pattern) ~~ ✅
 3. ~~API client + Inbox de Aprovações~~ ✅
   - Criar `remote-workflow/src/services/api.ts` (fetch wrapper puro, sem hook)
   - Criar `remote-workflow/src/hooks/useApi.ts` (hook que usa `useAuth` e memoiza `createApi(token)`)
@@ -343,18 +343,18 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
    - `utils/broadcastChannel.ts`: sincronizar ações entre abas
    - Integrar com inboxStore (aprovar na aba A → reflete na aba B)
    - Auth persistido via Zustand `persist` (sessão sobrevive entre abas)
-5. Detalhe de Instância
+5. ~~Detalhe de Instância~~ ✅
    - MSW handler: GET /api/instances/:id
    - Timeline virtualizada (reusar lib do passo 3)
    - Steps com estados visuais (pending, approved, rejected, waiting)
    - Snapshot vs estado atual com distinção visual
-6. Criação de Instância
+6. ~~Criação de Instância~~ ✅
    - Instalar `react-hook-form` + `zod`
    - MSW handlers: GET templates, GET template schema, POST instances
    - Schema Zod gerado dinamicamente a partir do template
    - Troca de template sem remontar form (reset seletivo, SEM key={templateId})
    - Feedback de submissão: pending → submitted
-7. Delegações
+7. ~~Delegações~~ ✅
    - MSW handlers: GET, POST (com erro de ciclo 400), DELETE delegations
    - CRUD completo: listar, criar, cancelar
    - Representação visual da cadeia de ciclo (não apenas toast)

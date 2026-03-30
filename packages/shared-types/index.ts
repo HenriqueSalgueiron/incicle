@@ -6,3 +6,5 @@ export type {
   ApproverSnapshot,
   ApproverSnapshotStep,
 } from './instance';
+export type { Template, TemplateField, TemplateSummary } from './template';
+export type { Delegation, CycleError } from './delegation';
