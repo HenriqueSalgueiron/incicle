@@ -7,7 +7,7 @@ SPA de workflow de aprovações corporativo multiempresa, usando arquitetura mic
 ## Estrutura do Monorepo
 
 ```
-workflow-approvals/
+incicle/
 ├── packages/
 │   └── shared-types/             → Workspace de tipos compartilhados
 │       ├── auth.ts               → User, Company, LoginResponse, RemoteAppProps
@@ -331,14 +331,16 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
 1. ~~Setup do monorepo (shell + remote + MF + vite configs + ESLint + Prettier + commitlint + husky)~~ ✅
 2. ~~Auth + company context (zustand store, shared-types, MSW setup, login page, enableMocking pattern) ~~ ✅
 3. ~~API client + Inbox de Aprovações~~ ✅
-  - Criar `remote-workflow/src/services/api.ts` (fetch wrapper puro, sem hook)
-  - Criar `remote-workflow/src/hooks/useApi.ts` (hook que usa `useAuth` e memoiza `createApi(token)`)
-  - Instalar `@tanstack/react-virtual` para virtualização
-  - MSW handlers: GET inbox (gerar 10k+ itens), POST approve, POST reject (com 409)
-  - `inboxStore.ts`: lista + atualização otimista + rollback no erro/409
-  - Componentes: lista virtualizada, item com SLA countdown, ações aprovar/reprovar
-  - Polling periódico (30s) para manter inbox atualizado
-  - Acessibilidade: navegação por teclado nos itens, roles corretos, labels
+
+- Criar `remote-workflow/src/services/api.ts` (fetch wrapper puro, sem hook)
+- Criar `remote-workflow/src/hooks/useApi.ts` (hook que usa `useAuth` e memoiza `createApi(token)`)
+- Instalar `@tanstack/react-virtual` para virtualização
+- MSW handlers: GET inbox (gerar 10k+ itens), POST approve, POST reject (com 409)
+- `inboxStore.ts`: lista + atualização otimista + rollback no erro/409
+- Componentes: lista virtualizada, item com SLA countdown, ações aprovar/reprovar
+- Polling periódico (30s) para manter inbox atualizado
+- Acessibilidade: navegação por teclado nos itens, roles corretos, labels
+
 4. ~~Multi-tab sync~~ ✅
    - `utils/broadcastChannel.ts`: sincronizar ações entre abas
    - Integrar com inboxStore (aprovar na aba A → reflete na aba B)
@@ -368,7 +370,7 @@ Cada teste deve documentar **o que** prova e **por que** é o cenário certo.
    - Instalar `knip` + `rollup-plugin-visualizer`
    - Gerar KNIP-REPORT.md (zero exports não utilizados)
    - Gerar BUNDLE-REPORT.html (medir FCP, bundle size, verificar budget)
-10. README.md + DECISIONS.md
+10. ~~README.md + DECISIONS.md~~ ✅
     - README: setup local, estratégia de mock, performance medida, o que faria com mais tempo
     - DECISIONS.md: respostas específicas sobre MF version mismatch, estado do store no 409, multi-tab strategy, form sem remontar
 

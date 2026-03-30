@@ -35,6 +35,7 @@ function decideItem(
   decision: 'approved' | 'rejected',
 ) {
   const { items } = get();
+  // Item snapshot to rollback in case of error
   const snapshot = items.find((i) => i.id === itemId);
   if (!snapshot) return;
 
@@ -56,11 +57,14 @@ function decideItem(
       if (status === 409) {
         const timestamp = Date.now();
         set((state) => ({
+          // Item gets removed from inbox because it was already decided by another user.
           items: state.items.filter((i) => i.id !== itemId),
+          // Adds conflict notification
           conflicts: [...state.conflicts, { itemId, title: snapshot.title, timestamp }],
         }));
         _channel?.post({ type: 'ITEM_CONFLICT', itemId, title: snapshot.title, timestamp });
       } else {
+        // In case of generic error, item gets rolled back to its previous state
         set((state) => ({
           items: state.items.map((i) => (i.id === itemId ? snapshot : i)),
           error: `Erro ao ${actionLabel} "${snapshot.title}"`,
